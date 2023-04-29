@@ -51,5 +51,9 @@ test_loss, test_acc = model.evaluate(X_test, y_test, verbose=2)
 # Print the test accuracy
 print('\nTest accuracy:', test_acc)
 
+model.save("handwritten.model")
+
+
+
 
 
