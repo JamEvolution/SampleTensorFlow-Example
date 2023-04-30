@@ -1,56 +1,60 @@
-import matplotlib.pyplot as plt
-import pandas as pd
-import cv2
-import numpy
-import collections
-import tensorflow as tf
-from sklearn import datasets
-from sklearn.model_selection import train_test_split
 import os
+import cv2
+import numpy as np
+import tensorflow as tf
+import matplotlib.pyplot as plt
 
-# Load the digits dataset
-digits = datasets.load_digits()
 
-# Get the input images from the dataset
-data = digits.images
+# Decide if to load an existing model or to train a new one
+train_new_model = True
 
-# Calculate the moments of the input images
-moments = []
-for img in data:
-    # Calculate the moments
-    M = cv2.moments(img)
-    moments.append(M)
+if train_new_model:
+    # Loading the MNIST data set with samples and splitting it
+    mnist = tf.keras.datasets.mnist
+    (X_train, y_train), (X_test, y_test) = mnist.load_data()
 
-# Convert the moments to a pandas DataFrame
-df_data = pd.DataFrame(moments)
+    # Normalizing the data (making length = 1)
+    X_train = tf.keras.utils.normalize(X_train, axis=1)
+    X_test = tf.keras.utils.normalize(X_test, axis=1)
 
-# Convert the DataFrame to float32
-df_data = df_data.astype('float32')
+    # Create a neural network model
+    # Add one flattened input layer for the pixels
+    # Add two dense hidden layers
+    # Add one dense output layer for the 10 digits
+    model = tf.keras.models.Sequential()
+    model.add(tf.keras.layers.Flatten())
+    model.add(tf.keras.layers.Dense(units=128, activation=tf.nn.relu))
+    model.add(tf.keras.layers.Dense(units=128, activation=tf.nn.relu))
+    model.add(tf.keras.layers.Dense(units=10, activation=tf.nn.softmax))
 
-# Split the data into training and testing sets
-X_train, X_test, y_train, y_test =train_test_split(df_data, digits.target,
-test_size=0.2, shuffle=False)
+    # Compiling and optimizing model
+    model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
 
-# Define the neural network model
-model = tf.keras.Sequential([
-tf.keras.layers.Flatten(input_shape=(df_data.shape[1],)),
-tf.keras.layers.Dense(128, activation='relu'),
-tf.keras.layers.Dense(10)
-])
+    # Training the model
+    model.fit(X_train, y_train, epochs=3)
 
-# Compile the model
-model.compile(optimizer='adam',
-loss= tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
-metrics =['accuracy'])
+    # Evaluating the model
+    val_loss, val_acc = model.evaluate(X_test, y_test)
+    print(val_loss)
+    print(val_acc)
 
-# Train the model
-model.fit(X_train, y_train, epochs=100)
+    # Saving the model
+    model.save('handwritten_digits.model')
+else:
+    # Load the model
+    model = tf.keras.models.load_model('handwritten_digits.model')
 
-# Evaluate the model on the testing data
-test_loss, test_acc = model.evaluate(X_test, y_test, verbose=2)
-
-# Print the test accuracy
-print('\nTest accuracy:', test_acc)
-
-model.save("handwritten.model")
-
+# Load custom images and predict them
+image_number = 1
+while os.path.isfile('digits/digit{}.png'.format(image_number)):
+    try:
+        img = cv2.imread('digits/digit{}.png'.format(image_number))[:,:,0]
+        img = np.invert(np.array([img]))
+        prediction = model.predict(img)
+        print("The number is probably a {}".format(np.argmax(prediction)))
+        plt.imshow(img[0], cmap=plt.cm.binary)
+        plt.show()
+        image_number += 1
+    except:
+        print("Error reading image! Proceeding with next image...")
+        image_number += 1
