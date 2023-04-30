@@ -51,7 +51,7 @@ while os.path.isfile('digits/digit{}.png'.format(image_number)):
         img = cv2.imread('digits/digit{}.png'.format(image_number))[:,:,0]
         img = np.invert(np.array([img]))
         prediction = model.predict(img)
-        print("The number is probably a {}".format(np.argmax(prediction)))
+        print("Tahmin ediyom :P {} değilse malım ".format(np.argmax(prediction)))
         plt.imshow(img[0], cmap=plt.cm.binary)
         plt.show()
         image_number += 1
