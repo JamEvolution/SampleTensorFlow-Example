@@ -6,6 +6,7 @@ import collections
 import tensorflow as tf
 from sklearn import datasets
 from sklearn.model_selection import train_test_split
+import os
 
 # Load the digits dataset
 digits = datasets.load_digits()
@@ -51,5 +52,5 @@ test_loss, test_acc = model.evaluate(X_test, y_test, verbose=2)
 # Print the test accuracy
 print('\nTest accuracy:', test_acc)
 
-
+model.save("handwritten.model")
 
